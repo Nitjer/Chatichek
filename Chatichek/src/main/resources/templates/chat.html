@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #D9D9D9;
+            font-family: 'Montserrat Alternates', sans-serif;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background-color: #636363;
+            color: white;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 60px;
+            flex-grow: 1;
+        }
+
+        .header-logo img {
+            height: 100%;
+        }
+
+        .chat-container {
+            display: flex;
+            height: 85vh;
+            margin-top: 10px;
+        }
+
+        .chat-list {
+            width: 25%;
+            border-right: 1px solid #3D3D3D;
+            overflow-y: auto;
+            background-color: #626262;
+            color: #ffffff;
+        }
+
+        .chat-list h5 {
+            text-align: center;
+            padding: 10px;
+            background-color: #626262;
+            color: white;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .general-chat-button, .home-button, .send-button {
+            background-color: #3d3d3d;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .general-chat-button:hover, .home-button:hover, .send-button:hover {
+            background-color: #6c757d;
+        }
+
+        .general-chat-button:active, .home-button:active, .send-button:active {
+            background-color: #495054;
+        }
+
+        .chat-window {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0 20px 0 20px;
+        }
+
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 10px;
+            height: 80vh;
+        }
+
+        .message-box {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+
+        .message-box.user {
+            background-color: #3d3d3d;
+            color: #ffffff;
+            align-self: flex-end;
+            max-width: 500px; /* Фиксированная максимальная ширина */
+            width: auto;      /* Автоматическая подстройка по содержимому */
+        }
+
+        .message-box.other {
+            background-color: #ffffff;
+            color: #3D3D3D;
+            align-self: flex-start;
+            max-width: 500px; /* Фиксированная максимальная ширина */
+            width: auto;      /* Автоматическая подстройка по содержимому */
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3d3d3d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+
+        .user-avatar {
+            background-color: #ffffff; /* Белый фон */
+            color: #000000;           /* Черный текст */
+            border: 1px solid #3d3d3d; /* Дополнительная тонкая рамка (опционально) */
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            align-self: flex-end;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            margin-left: 20px;
+        }
+
+        .input-container textarea {
+            height: 50px;
+            resize: none;
+            flex-grow: 1;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <a href="home" class="home-button">Назад</a>
+    <div class="header-logo">
+        <img src="/images/logo.png" alt="Logo">
+    </div>
+</div>
+<div class="container">
+    <div class="chat-container">
+
+        <div class="chat-list">
+            <h5>Чаты</h5>
+            <div class="general-chat-button" onclick="openGeneralChat()">
+                Общий чат
+            </div>
+        </div>
+
+        <div class="chat-window">
+            <div id="messages-container" class="messages-container">
+                <div th:each="msg : ${messages}" class="message-box" th:classappend="${msg.sender.userId == user.userId} ? 'user' : 'other'">
+                    <div th:if="${msg.sender.userId == user.userId}" class="avatar user-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>
+                    <div th:if="${msg.sender.userId != user.userId}" class="avatar other-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>
+                    <div class="message-content">
+                        <b th:if="${msg.sender.userId == user.userId}">Вы:</b>
+                        <b th:if="${msg.sender.userId != user.userId}" th:text="${msg.sender.nickname}"></b>
+                        <span th:text="${msg.messageText}"></span>
+                    </div>
+                    <small class="message-time" th:text="${#dates.format(msg.messageTime, 'dd.MM.yyyy HH:mm')}"></small>
+
+                </div>
+            </div>
+
+            <form th:action="@{/chat/send}" method="post" class="input-container" onsubmit="return preserveScrollPosition()">
+                <input type="hidden" name="chatId" th:value="${currentChatId}"/>
+                <textarea class="form-control" name="messageText" rows="3" placeholder="Введите сообщение"></textarea>
+                <button type="submit" class="send-button">Отправить</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    let messagesContainer = document.getElementById('messages-container');
+    let isAtTop = messagesContainer.scrollHeight <= messagesContainer.clientHeight;
+
+    function checkScrollPosition() {
+        isAtTop = messagesContainer.scrollTop === 0;
+    }
+
+    function refreshMessages() {
+        const chatId = document.querySelector('input[name="chatId"]').value;
+        const oldScrollHeight = messagesContainer.scrollHeight;
+        const oldScrollTop = messagesContainer.scrollTop;
+
+        fetch(`/chat/messages?chatId=${chatId}`)
+            .then(response => response.text())
+            .then(data => {
+                let tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                messagesContainer.innerHTML = tempDiv.querySelector('#messages-container').innerHTML;
+
+                if (isAtTop) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight - oldScrollHeight + oldScrollTop;
+                }
+            })
+            .catch(error => console.error('Ошибка при обновлении сообщений:', error));
+    }
+
+    setInterval(refreshMessages, 3000);
+    messagesContainer.addEventListener('scroll', checkScrollPosition);
+
+    function openGeneralChat() {
+        window.location.href = '/chat?chatId=1';
+    }
+
+    function preserveScrollPosition() {
+        sessionStorage.setItem('scrollPosition', messagesContainer.scrollTop);
+        return true;
+    }
+
+    window.onload = () => {
+        if (sessionStorage.getItem('scrollPosition')) {
+            messagesContainer.scrollTop = sessionStorage.getItem('scrollPosition');
+            sessionStorage.removeItem('scrollPosition');
+        }
+    };
+    function deleteMessage(messageId) {
+        if (confirm('Вы уверены, что хотите удалить это сообщение?')) {
+            fetch(`/chat/delete/${messageId}`, {
+                method: 'DELETE'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        refreshMessages(); // Обновляем сообщения после удаления
+                    } else {
+                        alert('Ошибка при удалении сообщения.');
+                    }
+                })
+                .catch(error => console.error('Ошибка:', error));
+        }
+    }
+</script>
+</body>
+</html>
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Chat</title>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap" rel="stylesheet">-->
+<!--    <style>-->
+<!--        body {-->
+<!--            background-color: #D9D9D9;-->
+<!--            font-family: 'Montserrat Alternates', sans-serif;-->
+<!--        }-->
+
+<!--        .header-container {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: space-between;-->
+<!--            padding: 10px 20px;-->
+<!--            background-color: #636363;-->
+<!--            color: white;-->
+<!--        }-->
+
+<!--        .header-logo {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            height: 60px;-->
+<!--            flex-grow: 1;-->
+<!--        }-->
+
+<!--        .header-logo img {-->
+<!--            height: 100%;-->
+<!--        }-->
+
+<!--        .chat-container {-->
+<!--            display: flex;-->
+<!--            height: 85vh;-->
+<!--            margin-top: 10px;-->
+<!--        }-->
+
+<!--        .chat-list {-->
+<!--            width: 25%;-->
+<!--            border-right: 1px solid #3D3D3D;-->
+<!--            overflow-y: auto;-->
+<!--            background-color: #626262;-->
+<!--            color: #ffffff;-->
+<!--        }-->
+
+<!--        .chat-list h5 {-->
+<!--            text-align: center;-->
+<!--            padding: 10px;-->
+<!--            background-color: #626262;-->
+<!--            color: white;-->
+<!--            margin: 0;-->
+<!--            font-size: 24px;-->
+<!--        }-->
+
+<!--        .general-chat-button, .home-button, .send-button {-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: white;-->
+<!--            text-align: center;-->
+<!--            padding: 10px;-->
+<!--            margin: 10px;-->
+<!--            border-radius: 5px;-->
+<!--            cursor: pointer;-->
+<!--            transition: background-color 0.3s;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .general-chat-button:hover, .home-button:hover, .send-button:hover {-->
+<!--            background-color: #6c757d;-->
+<!--        }-->
+
+<!--        .general-chat-button:active, .home-button:active, .send-button:active {-->
+<!--            background-color: #495054;-->
+<!--        }-->
+
+<!--        .chat-window {-->
+<!--            flex-grow: 1;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            padding: 0 20px 0 20px;-->
+<!--        }-->
+
+<!--        .messages-container {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            overflow-y: auto;-->
+<!--            padding: 10px;-->
+<!--            height: 80vh;-->
+<!--        }-->
+
+<!--        .message-box {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            position: relative;-->
+<!--            margin: 5px 0;-->
+<!--            padding: 10px;-->
+<!--            border-radius: 10px;-->
+<!--            max-width: 10%;-->
+<!--            word-wrap: break-word;-->
+<!--        }-->
+
+<!--        .message-box.user {-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: #ffffff;-->
+<!--            align-self: flex-end;-->
+<!--            max-width: 500px;-->
+<!--            width: auto;-->
+<!--        }-->
+
+<!--        .message-box.other {-->
+<!--            background-color: #ffffff;-->
+<!--            color: #3D3D3D;-->
+<!--            align-self: flex-start;-->
+<!--            max-width: 500px;-->
+<!--            width: auto;-->
+<!--        }-->
+
+<!--        .date-divider {-->
+<!--            text-align: center;-->
+<!--            margin: 10px 0;-->
+<!--            color: #888;-->
+<!--            font-size: 14px;-->
+<!--            font-weight: bold;-->
+<!--        }-->
+
+<!--        .avatar {-->
+<!--            width: 40px;-->
+<!--            height: 40px;-->
+<!--            border-radius: 50%;-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: white;-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            font-weight: bold;-->
+<!--            margin-right: 10px;-->
+<!--            margin-left: 10px;-->
+<!--        }-->
+
+<!--        .user-avatar {-->
+<!--            background-color: #ffffff;-->
+<!--            color: #000000;-->
+<!--            border: 1px solid #3d3d3d;-->
+<!--        }-->
+
+<!--        .message-content {-->
+<!--            display: inline-block;-->
+<!--            max-width: 100%;-->
+<!--            word-wrap: break-word;-->
+<!--        }-->
+
+<!--        .message-time {-->
+<!--            align-self: flex-end;-->
+<!--            font-size: 12px;-->
+<!--            color: #888;-->
+<!--        }-->
+
+<!--        .input-container {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            margin-top: 10px;-->
+<!--            margin-left: 20px;-->
+<!--        }-->
+
+<!--        .input-container textarea {-->
+<!--            height: 50px;-->
+<!--            resize: none;-->
+<!--            flex-grow: 1;-->
+<!--        }-->
+
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div class="header-container">-->
+<!--    <a href="home" class="home-button">Назад</a>-->
+<!--    <div class="header-logo">-->
+<!--        <img src="/images/logo.png" alt="Logo">-->
+<!--    </div>-->
+<!--</div>-->
+<!--<div class="container">-->
+<!--    <div class="chat-container">-->
+<!--        <div class="chat-list">-->
+<!--            <h5>Чаты</h5>-->
+<!--            <div class="general-chat-button" onclick="openGeneralChat()">-->
+<!--                Общий чат-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="chat-window">-->
+<!--            <div id="messages-container" class="messages-container">-->
+<!--                <div th:each="msg, stat : ${messages}">-->
+<!--                    <div th:if="${stat.index == 0 || #dates.format(msg.messageTime, 'dd.MM.yyyy') != #dates.format(messages[stat.index - 1].messageTime, 'dd.MM.yyyy')}" class="date-divider" th:text="${#dates.format(msg.messageTime, 'dd.MM.yyyy')}"></div>-->
+<!--                    <div class="message-box" th:classappend="${msg.sender.userId == user.userId ? 'user' : 'other'}">-->
+<!--                        <div th:if="${msg.sender.userId == user.userId}" class="avatar user-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>-->
+<!--                        <div th:if="${msg.sender.userId != user.userId}" class="avatar other-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>-->
+<!--                        <div class="message-content">-->
+<!--                            <b th:if="${msg.sender.userId == user.userId}">Вы:</b>-->
+<!--                            <b th:if="${msg.sender.userId != user.userId}" th:text="${msg.sender.nickname}"></b>-->
+<!--                            <span th:text="${msg.messageText}"></span>-->
+<!--                        </div>-->
+<!--                        <small class="message-time" th:text="${#dates.format(msg.messageTime, 'HH:mm')}"></small>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <form th:action="@{/chat/send}" method="post" class="input-container" onsubmit="return preserveScrollPosition()">-->
+<!--                <input type="hidden" name="chatId" th:value="${currentChatId}"/>-->
+<!--                <textarea class="form-control" name="messageText" rows="3" placeholder="Введите сообщение"></textarea>-->
+<!--                <button type="submit" class="send-button">Отправить</button>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--<script>-->
+<!--    let messagesContainer = document.getElementById('messages-container');-->
+<!--    let isAtTop = messagesContainer.scrollHeight <= messagesContainer.clientHeight;-->
+
+<!--    function checkScrollPosition() {-->
+<!--        isAtTop = messagesContainer.scrollTop === 0;-->
+<!--    }-->
+
+<!--    function refreshMessages() {-->
+<!--        const chatId = document.querySelector('input[name="chatId"]').value;-->
+<!--        const oldScrollHeight = messagesContainer.scrollHeight;-->
+<!--        const oldScrollTop = messagesContainer.scrollTop;-->
+
+<!--        fetch(`/chat/messages?chatId=${chatId}`)-->
+<!--            .then(response => response.text())-->
+<!--            .then(data => {-->
+<!--                let tempDiv = document.createElement('div');-->
+<!--                tempDiv.innerHTML = data;-->
+<!--                messagesContainer.innerHTML = tempDiv.querySelector('#messages-container').innerHTML;-->
+
+<!--                if (isAtTop) {-->
+<!--                    messagesContainer.scrollTop = messagesContainer.scrollHeight - oldScrollHeight + oldScrollTop;-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(error => console.error('Ошибка при обновлении сообщений:', error));-->
+<!--    }-->
+
+<!--    setInterval(refreshMessages, 3000);-->
+<!--    messagesContainer.addEventListener('scroll', checkScrollPosition);-->
+
+<!--    function openGeneralChat() {-->
+<!--        window.location.href = '/chat?chatId=1';-->
+<!--    }-->
+
+<!--    function preserveScrollPosition() {-->
+<!--        sessionStorage.setItem('scrollPosition', messagesContainer.scrollTop);-->
+<!--        return true;-->
+<!--    }-->
+
+<!--    window.onload = () => {-->
+<!--        if (sessionStorage.getItem('scrollPosition')) {-->
+<!--            messagesContainer.scrollTop = sessionStorage.getItem('scrollPosition');-->
+<!--            sessionStorage.removeItem('scrollPosition');-->
+<!--        }-->
+<!--    };-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Chat</title>-->
+<!--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">-->
+<!--    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@400;500;600&display=swap" rel="stylesheet">-->
+<!--    <style>-->
+<!--        body {-->
+<!--            background-color: #D9D9D9;-->
+<!--            font-family: 'Montserrat Alternates', sans-serif;-->
+<!--        }-->
+
+<!--        .header-container {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: space-between;-->
+<!--            padding: 10px 20px;-->
+<!--            background-color: #636363;-->
+<!--            color: white;-->
+<!--        }-->
+
+<!--        .header-logo {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            height: 60px;-->
+<!--            flex-grow: 1;-->
+<!--        }-->
+
+<!--        .header-logo img {-->
+<!--            height: 100%;-->
+<!--        }-->
+
+<!--        .chat-container {-->
+<!--            display: flex;-->
+<!--            height: 85vh;-->
+<!--            margin-top: 10px;-->
+<!--        }-->
+
+<!--        .chat-list {-->
+<!--            width: 25%;-->
+<!--            border-right: 1px solid #3D3D3D;-->
+<!--            overflow-y: auto;-->
+<!--            background-color: #626262;-->
+<!--            color: #ffffff;-->
+<!--        }-->
+
+<!--        .chat-list h5 {-->
+<!--            text-align: center;-->
+<!--            padding: 10px;-->
+<!--            background-color: #626262;-->
+<!--            color: white;-->
+<!--            margin: 0;-->
+<!--            font-size: 24px;-->
+<!--        }-->
+
+<!--        .general-chat-button, .home-button, .send-button {-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: white;-->
+<!--            text-align: center;-->
+<!--            padding: 10px;-->
+<!--            margin: 10px;-->
+<!--            border-radius: 5px;-->
+<!--            cursor: pointer;-->
+<!--            transition: background-color 0.3s;-->
+<!--            text-decoration: none;-->
+<!--        }-->
+
+<!--        .general-chat-button:hover, .home-button:hover, .send-button:hover {-->
+<!--            background-color: #6c757d;-->
+<!--        }-->
+
+<!--        .general-chat-button:active, .home-button:active, .send-button:active {-->
+<!--            background-color: #495054;-->
+<!--        }-->
+
+<!--        .chat-window {-->
+<!--            flex-grow: 1;-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            padding: 0 20px 0 20px;-->
+<!--        }-->
+
+<!--        .messages-container {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            overflow-y: auto;-->
+<!--            padding: 10px;-->
+<!--            height: 80vh;-->
+<!--        }-->
+
+<!--        .message-box {-->
+<!--            display: flex;-->
+<!--            flex-direction: column;-->
+<!--            position: relative;-->
+<!--            margin: 5px 0;-->
+<!--            padding: 10px;-->
+<!--            border-radius: 10px;-->
+<!--            max-width: 60%;-->
+<!--            word-wrap: break-word;-->
+<!--        }-->
+
+<!--        .message-box.user {-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: #ffffff;-->
+<!--            align-self: flex-end;-->
+<!--            max-width: 500px; /* Фиксированная максимальная ширина */-->
+<!--            width: auto;      /* Автоматическая подстройка по содержимому */-->
+<!--        }-->
+
+<!--        .message-box.other {-->
+<!--            background-color: #ffffff;-->
+<!--            color: #3D3D3D;-->
+<!--            align-self: flex-start;-->
+<!--            max-width: 500px; /* Фиксированная максимальная ширина */-->
+<!--            width: auto;      /* Автоматическая подстройка по содержимому */-->
+<!--        }-->
+
+<!--        .avatar {-->
+<!--            width: 40px;-->
+<!--            height: 40px;-->
+<!--            border-radius: 50%;-->
+<!--            background-color: #3d3d3d;-->
+<!--            color: white;-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            justify-content: center;-->
+<!--            font-weight: bold;-->
+<!--            margin-right: 10px;-->
+<!--            margin-left: 10px;-->
+<!--        }-->
+
+<!--        .user-avatar {-->
+<!--            background-color: #ffffff; /* Белый фон */-->
+<!--            color: #000000;           /* Черный текст */-->
+<!--            border: 1px solid #3d3d3d; /* Дополнительная тонкая рамка (опционально) */-->
+<!--        }-->
+
+<!--        .message-content {-->
+<!--            display: inline-block;-->
+<!--            max-width: 100%;-->
+<!--            word-wrap: break-word;-->
+<!--        }-->
+
+<!--        .message-time {-->
+<!--            align-self: flex-end;-->
+<!--            font-size: 12px;-->
+<!--            color: #888;-->
+<!--        }-->
+
+<!--        .input-container {-->
+<!--            display: flex;-->
+<!--            align-items: center;-->
+<!--            margin-top: 10px;-->
+<!--            margin-left: 20px;-->
+<!--        }-->
+
+<!--        .input-container textarea {-->
+<!--            height: 50px;-->
+<!--            resize: none;-->
+<!--            flex-grow: 1;-->
+<!--        }-->
+
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--<div class="header-container">-->
+<!--    <a href="home" class="home-button">Назад</a>-->
+<!--    <div class="header-logo">-->
+<!--        <img src="/images/logo.png" alt="Logo">-->
+<!--    </div>-->
+<!--</div>-->
+<!--<div class="container">-->
+<!--    <div class="chat-container">-->
+
+<!--        <div class="chat-list">-->
+<!--            <h5>Чаты</h5>-->
+<!--            <div class="general-chat-button" onclick="openGeneralChat()">-->
+<!--                Общий чат-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="chat-window">-->
+<!--            <div id="messages-container" class="messages-container">-->
+<!--                <div th:each="msg : ${messages}" class="message-box" th:classappend="${msg.sender.userId == user.userId} ? 'user' : 'other'">-->
+<!--                    <div th:if="${msg.sender.userId == user.userId}" class="avatar user-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>-->
+<!--                    <div th:if="${msg.sender.userId != user.userId}" class="avatar other-avatar" th:text="${msg.sender.nickname.substring(0, 1).toUpperCase()}"></div>-->
+<!--                    <div class="message-content">-->
+<!--                        <b th:if="${msg.sender.userId == user.userId}">Вы:</b>-->
+<!--                        <b th:if="${msg.sender.userId != user.userId}" th:text="${msg.sender.nickname}"></b>-->
+<!--                        <span th:text="${msg.messageText}"></span>-->
+<!--                    </div>-->
+<!--                    <small class="message-time" th:text="${#dates.format(msg.messageTime, 'dd.MM.yyyy HH:mm')}"></small>-->
+<!--                    <button th:if="${isAdmin or msg.sender.userId == user.userId}" class="btn btn-danger btn-sm delete-btn" th:data-message-id="${msg.messageId}" onclick="deleteMessage(this.getAttribute('data-message-id'))">Удалить</button>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <form th:action="@{/chat/send}" method="post" class="input-container" onsubmit="return preserveScrollPosition()">-->
+<!--                <input type="hidden" name="chatId" th:value="${currentChatId}"/>-->
+<!--                <textarea class="form-control" name="messageText" rows="3" placeholder="Введите сообщение"></textarea>-->
+<!--                <button type="submit" class="send-button">Отправить</button>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+<!--<script>-->
+<!--    let messagesContainer = document.getElementById('messages-container');-->
+<!--    let isAtTop = messagesContainer.scrollHeight <= messagesContainer.clientHeight;-->
+
+<!--    function checkScrollPosition() {-->
+<!--        isAtTop = messagesContainer.scrollTop === 0;-->
+<!--    }-->
+
+<!--    function refreshMessages() {-->
+<!--        const chatId = document.querySelector('input[name="chatId"]').value;-->
+<!--        const oldScrollHeight = messagesContainer.scrollHeight;-->
+<!--        const oldScrollTop = messagesContainer.scrollTop;-->
+
+<!--        fetch(`/chat/messages?chatId=${chatId}`)-->
+<!--            .then(response => response.text())-->
+<!--            .then(data => {-->
+<!--                let tempDiv = document.createElement('div');-->
+<!--                tempDiv.innerHTML = data;-->
+<!--                messagesContainer.innerHTML = tempDiv.querySelector('#messages-container').innerHTML;-->
+
+<!--                if (isAtTop) {-->
+<!--                    messagesContainer.scrollTop = messagesContainer.scrollHeight - oldScrollHeight + oldScrollTop;-->
+<!--                }-->
+<!--            })-->
+<!--            .catch(error => console.error('Ошибка при обновлении сообщений:', error));-->
+<!--    }-->
+
+<!--    setInterval(refreshMessages, 3000);-->
+<!--    messagesContainer.addEventListener('scroll', checkScrollPosition);-->
+
+<!--    function openGeneralChat() {-->
+<!--        window.location.href = '/chat?chatId=1';-->
+<!--    }-->
+
+<!--    function preserveScrollPosition() {-->
+<!--        sessionStorage.setItem('scrollPosition', messagesContainer.scrollTop);-->
+<!--        return true;-->
+<!--    }-->
+
+<!--    window.onload = () => {-->
+<!--        if (sessionStorage.getItem('scrollPosition')) {-->
+<!--            messagesContainer.scrollTop = sessionStorage.getItem('scrollPosition');-->
+<!--            sessionStorage.removeItem('scrollPosition');-->
+<!--        }-->
+<!--    };-->
+<!--    function deleteMessage(messageId) {-->
+<!--        if (confirm('Вы уверены, что хотите удалить это сообщение?')) {-->
+<!--            fetch(`/chat/delete/${messageId}`, {-->
+<!--                method: 'DELETE'-->
+<!--            })-->
+<!--                .then(response => {-->
+<!--                    if (response.ok) {-->
+<!--                        refreshMessages(); // Обновляем сообщения после удаления-->
+<!--                    } else {-->
+<!--                        alert('Ошибка при удалении сообщения.');-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(error => console.error('Ошибка:', error));-->
+<!--        }-->
+<!--    }-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

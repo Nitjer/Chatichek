@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+</head>
+<body>
+<h2>Авторизация</h2>
+<!-- Вывод сообщения об ошибке -->
+<div style="color: red;">
+    <p th:if="${error}" th:text="${error}"></p>
+</div>
+
+<form action="/auth/login" method="post">
+    <label for="login">Логин:</label>
+    <input type="text" id="login" name="login" required><br>
+
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required><br>
+
+    <button type="submit">Войти</button>
+</form>
+</body>
+</html>
